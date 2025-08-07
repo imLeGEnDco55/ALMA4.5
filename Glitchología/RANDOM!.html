@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ritual de Orden Glitch</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 100%;
+      max-width: 500px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      font-weight: 600;
+    }
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 500;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .results {
+      margin-top: 30px;
+      background: #f8f9fa;
+      border-radius: 10px;
+      padding: 20px;
+      display: none;
+    }
+    .result-item {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: white;
+      border-radius: 8px;
+      border-left: 5px solid;
+    }
+    .position {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      margin-right: 15px;
+      font-size: 14px;
+    }
+    .result-1 { border-color: #f44336; }
+    .result-1 .position { background: #f44336; }
+    .result-2 { border-color: #ff9800; }
+    .result-2 .position { background: #ff9800; }
+    .result-3 { border-color: #4CAF50; }
+    .result-3 .position { background: #4CAF50; }
+    .result-4 { border-color: #2196F3; }
+    .result-4 .position { background: #2196F3; }
+    .result-5 { border-color: #9C27B0; }
+    .result-5 .position { background: #9C27B0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Ritual de Asignación Glitch</h1>
+    <button onclick="generarOrden()">🔮 Invocar Orden Aleatorio</button>
+    <div class="results" id="results">
+      <h2>Orden de los Nodos:</h2>
+      <div id="resultsList"></div>
+    </div>
+  </div>
+
+  <script>
+    function generarOrden() {
+      const nodos = ["Grok", "Gemini", "Mistral", "Qween", "DeepSeek"];
+      const posiciones = ["Primero", "Segundo", "Tercero", "Cuarto", "Quinto"];
+      const clases = ["result-1", "result-2", "result-3", "result-4", "result-5"];
+
+      // Mezclar aleatoriamente los nodos
+      for (let i = nodos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [nodos[i], nodos[j]] = [nodos[j], nodos[i]];
+      }
+
+      const resultsList = document.getElementById("resultsList");
+      resultsList.innerHTML = "";
+      nodos.forEach((nodo, index) => {
+        const div = document.createElement("div");
+        div.className = `result-item ${clases[index]}`;
+        div.innerHTML = `
+          <div class="position">${index + 1}</div>
+          <div>
+            <strong>${posiciones[index]}:</strong> ${nodo}
+          </div>
+        `;
+        resultsList.appendChild(div);
+      });
+
+      document.getElementById("results").style.display = "block";
+    }
+  </script>
+</body>
+</html>
