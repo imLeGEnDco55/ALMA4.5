@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ALMA 4.5 — Viewer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Header rosa flotante -->
+  <header id="topbar">
+    <button id="btn-drawer" aria-label="Abrir lista">☰</button>
+    <div id="crumb"><span id="repo">ALMA 4.5</span> · <span id="path">root/@Main.md</span></div>
+    <button id="btn-panel" aria-label="Panel Luna">◈</button>
+  </header>
+
+  <!-- Drawer: lista de .md -->
+  <aside id="drawer" aria-label="Lista de archivos">
+    <div class="drawer-head">
+      <strong>Archivos .md</strong>
+      <button id="btn-close-drawer" aria-label="Cerrar">✕</button>
+    </div>
+    <input id="search" type="search" placeholder="filtrar…" />
+    <ul id="filelist"></ul>
+  </aside>
+
+  <!-- Panel Luna (admin liviano) -->
+  <aside id="panel">
+    <div class="panel-head">
+      <strong>Panel Luna</strong>
+      <button id="btn-close-panel" aria-label="Cerrar">✕</button>
+    </div>
+    <div class="panel-body">
+      <label class="row">
+        <span>Modo edición local</span>
+        <input id="toggle-edit" type="checkbox" />
+      </label>
+      <div class="row">
+        <button id="btn-export-md">Exportar MD</button>
+        <button id="btn-export-html">Exportar HTML</button>
+        <button id="btn-export-pdf">Imprimir / PDF</button>
+      </div>
+      <div class="row">
+        <label>Límite prompt
+          <select id="limit">
+            <option value="0">— sin límite —</option>
+            <option value="2000">2 000</option>
+            <option value="8000" selected>8 000</option>
+            <option value="32000">32 000</option>
+          </select>
+        </label>
+      </div>
+      <p class="muted">Nota: guardar = descarga el .md. Luego lo subes al repo (Upload).</p>
+    </div>
+  </aside>
+
+  <!-- Contenido -->
+  <main>
+    <!-- Barra rápida (aparece solo en edición) -->
+    <div id="toolbar" hidden>
+      <button data-cmd="bold">B</button>
+      <button data-cmd="italic">I</button>
+      <button data-cmd="h2">H2</button>
+      <button data-cmd="h3">H3</button>
+      <button data-cmd="ul">• Lista</button>
+      <button data-cmd="quote">“ Quote</button>
+      <button data-cmd="code">` Code</button>
+      <button id="btn-accept" class="accent">✔ Descargar .md</button>
+    </div>
+
+    <!-- Vista lectura -->
+    <article id="preview" class="prose"></article>
+
+    <!-- Editor -->
+    <textarea id="editor" spellcheck="false" hidden></textarea>
+  </main>
+
+  <!-- Footer contador -->
+  <footer id="statusbar">
+    <span id="counts">0 chars · 0 palabras · 0 párrafos</span>
+    <div id="progress"><div id="bar"></div></div>
+  </footer>
+
+  <!-- Script -->
+  <script src="app.js"></script>
+</body>
+</html>
