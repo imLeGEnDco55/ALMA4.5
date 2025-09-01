@@ -17,31 +17,13 @@ const REPO_NAME  = repoGuess  || 'ALMA45';       // fallback
 
 // ===== Helpers =====
 const $ = s => document.querySelector(s);
-const md = (t) => {
-  // render markdown muy básico (titulares, negritas, ital, code, quote, listas)
-  // Para simple viewer basta; si luego quieres remark/marked, se cambia aquí.
-  let html = t
-    .replace(/^###### (.*$)/gim, '<h6>$1</h6>')
-    .replace(/^##### (.*$)/gim, '<h5>$1</h5>')
-    .replace(/^#### (.*$)/gim, '<h4>$1</h4>')
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/```([\s\S]*?)```/g, (_, code) => `<pre><code>${escapeHtml(code)}</code></pre>`)
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/^\> (.*$)/gim, '<blockquote>$1</blockquote>')
-    .replace(/^\s*[-*+] (.*)$/gim, '<li>$1</li>')
-    .replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>')
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-    .replace(/\n$/g, '<br />');
-  html = html.split('\n\n').map(p=>{
-    if (p.match(/^<h\d|<ul|<pre|<blockquote/)) return p;
-    return `<p>${p}</p>`;
-  }).join('\n');
-  return html;
-};
-const escapeHtml = (s) => s.replace(/[&<>"]/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+function md(t) {
+  // opcional: oculta front‑matter YAML del inicio
+  t = t.replace(/^---[\s\S]*?---\s*/,'');
+  marked.setOptions({ mangle:false, headerIds:true });
+  const raw = marked.parse(t);
+  return DOMPurify.sanitize(raw);
+}
 
 // ===== UI refs =====
 const preview = $('#preview');
@@ -140,6 +122,26 @@ async function openFile(path){
   const res = await fetch(raw);
   currentText = await res.text();
   preview.innerHTML = md(currentText);
+  // crea id de ancla en headers si no lo puso marked
+  preview.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h=>{
+    if (!h.id) {
+      h.id = h.textContent.trim()
+        .toLowerCase()
+        .replace(/[^\w\- ]+/g,'')
+        .replace(/\s+/g,'-');
+    }
+    h.style.cursor = 'pointer';
+    h.addEventListener('click', ()=>{
+      const url = new URL(location.href);
+      url.hash = h.id;
+      history.replaceState(null, '', url);
+    });
+  });
+  // si llega con #hash, scrollea
+  if (location.hash) {
+    const t = preview.querySelector(location.hash);
+    if (t) t.scrollIntoView({behavior:'smooth', block:'start'});
+  }
   editor.value = currentText;
   updateCounts(currentText);
   // Modo lectura por defecto
@@ -150,6 +152,25 @@ async function openFile(path){
   const url = new URL(location.href);
   url.searchParams.set('file', path);
   history.replaceState(null, '', url);
+  // hace que los enlaces a .md abran dentro del viewer
+  preview.querySelectorAll('a[href]').forEach(a=>{
+    const href = a.getAttribute('href');
+    if (!href) return;
+    if (href.endsWith('.md')) {
+      a.addEventListener('click', (e)=>{
+        e.preventDefault();
+        const next = decodeURI(href);
+        // soporta rutas relativas como Codex/Tarot.md
+        openFile(next);
+      });
+    } else if (href.startsWith('#')) {
+      // permitir anclas internas
+    } else {
+      // externos en nueva pestaña
+      a.setAttribute('target','_blank');
+      a.setAttribute('rel','noopener');
+    }
+  });
 }
 function setEditMode(on){
   toggleEdit.checked = on;
