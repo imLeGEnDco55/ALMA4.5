@@ -108,12 +108,46 @@ async function loadTree(){
 }
 function renderList(list){
   filelist.innerHTML = '';
+  const roots = [];
+  const dirs = {};
   list.forEach(p=>{
-    const li = document.createElement('li');
-    li.textContent = p;
-    li.onclick = ()=> { drawer.classList.remove('open'); openFile(p); };
-    filelist.appendChild(li);
+    if (!p.includes('/')) {
+      roots.push(p);
+    } else {
+      const [dir, ...rest] = p.split('/');
+      const name = rest.join('/');
+      if (!dirs[dir]) dirs[dir] = [];
+      dirs[dir].push(name);
+    }
   });
+  roots.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+    .forEach(p=>{
+      const li = document.createElement('li');
+      li.textContent = p;
+      li.onclick = ()=> { drawer.classList.remove('open'); openFile(p); };
+      filelist.appendChild(li);
+    });
+  Object.keys(dirs)
+    .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+    .forEach(dir=>{
+      const li = document.createElement('li');
+      li.className = 'folder-item';
+      const span = document.createElement('span');
+      span.textContent = dir;
+      span.className = 'folder';
+      li.appendChild(span);
+      const ul = document.createElement('ul');
+      dirs[dir]
+        .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+        .forEach(name=>{
+          const sub = document.createElement('li');
+          sub.textContent = name;
+          sub.onclick = ()=> { drawer.classList.remove('open'); openFile(dir + '/' + name); };
+          ul.appendChild(sub);
+        });
+      li.appendChild(ul);
+      filelist.appendChild(li);
+    });
 }
 async function openFile(path){
   currentPath = path;

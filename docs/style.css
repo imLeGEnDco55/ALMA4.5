@@ -38,6 +38,10 @@ body{
 #filelist{list-style:none; margin:0; padding:.25rem; overflow:auto}
 #filelist li{padding:.4rem .5rem; border-radius:.4rem; cursor:pointer}
 #filelist li:hover{background:#23232b}
+#filelist li.folder-item{cursor:default}
+#filelist li.folder-item:hover{background:none}
+#filelist .folder{font-weight:700}
+#filelist ul{list-style:none; margin:0; padding-left:1rem}
 
 /* Panel Luna */
 #panel{
