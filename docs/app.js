@@ -309,10 +309,7 @@ document.addEventListener('scroll', ()=>{
   // nada por ahora (ya tenemos barra de límite); si quieres progreso de scroll lo añadimos luego
 });
 
-window.addEventListener('beforeunload', (e)=>{
-  if (dirty){
-    e.preventDefault();
-    e.returnValue = '';
+    e.returnValue = 'Tienes cambios sin guardar. Si sales de la página, podrías perder tu trabajo.';
   }
 });
 
