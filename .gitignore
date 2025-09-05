@@ -1,0 +1,33 @@
+# Build artifacts
+dist/
+build/
+node_modules/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Log files
+*.log
+
+# Archives that might cause merge conflicts
+*.zip
+*.rar
+*.tar.gz
+*.7z
+
+# Backup files
+*.bak
+*.backup
+*~
