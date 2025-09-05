@@ -31,6 +31,7 @@ const editor  = $('#editor');
 const counts  = $('#counts');
 const bar     = $('#bar');
 const limitSel= $('#limit');
+const statusMsg = $('#status');
 
 const crumbPath = $('#path');
 const repoTitle = $('#repo');
@@ -56,6 +57,7 @@ const btnExportPDF = $('#btn-export-pdf');
 let currentPath = DEFAULT_FILE;
 let currentText = '';
 let files = [];
+let dirty = false;
 
 // ===== Init =====
 repoTitle.textContent = `${REPO_OWNER}/${REPO_NAME}`;
@@ -83,7 +85,7 @@ toolbar.addEventListener('click', (e)=>{
 // Filtro lista
 search.addEventListener('input', ()=>{
   const q = search.value.toLowerCase();
-  renderList(files.filter(f => f.toLowerCase().includes(q)));
+  renderList(files.filter(f => f.toLowerCase().includes(q)), q);
 });
 
 // Load tree and initial file
@@ -98,29 +100,88 @@ loadTree().then(()=>{
 // ===== Functions =====
 async function loadTree(){
   const api = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${DEFAULT_BRANCH}?recursive=1`;
-  const res = await fetch(api);
-  const data = await res.json();
-  files = (data.tree || [])
-    .filter(x => x.type === 'blob' && x.path.toLowerCase().endsWith('.md'))
-    .map(x => x.path)
-    .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
-  renderList(files);
+  try {
+    const res = await fetch(api);
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+    files = (data.tree || [])
+      .filter(x => x.type === 'blob' && x.path.toLowerCase().endsWith('.md'))
+      .map(x => x.path)
+      .sort((a,b)=> a.localeCompare(b, 'es', {sensitivity:'base'}));
+    renderList(files);
+    clearError();
+  } catch(err) {
+    showError('Error al cargar lista', loadTree);
+  }
 }
-function renderList(list){
+function renderList(list, q=''){
   filelist.innerHTML = '';
+  const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const mark = s => {
+    if (!q) return esc(s);
+    const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'ig');
+    return esc(s).replace(re, '<mark>$1</mark>');
+  };
+  const roots = [];
+  const dirs = {};
   list.forEach(p=>{
-    const li = document.createElement('li');
-    li.textContent = p;
-    li.onclick = ()=> { drawer.classList.remove('open'); openFile(p); };
-    filelist.appendChild(li);
+    if (!p.includes('/')) {
+      roots.push(p);
+    } else {
+      const [dir, ...rest] = p.split('/');
+      const name = rest.join('/');
+      if (!dirs[dir]) dirs[dir] = [];
+      dirs[dir].push(name);
+    }
   });
+  roots.sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+    .forEach(p=>{
+      const li = document.createElement('li');
+      li.innerHTML = mark(p);
+      li.onclick = ()=> { drawer.classList.remove('open'); openFile(p); };
+      filelist.appendChild(li);
+    });
+  Object.keys(dirs)
+    .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+    .forEach(dir=>{
+      const li = document.createElement('li');
+      li.className = 'folder-item';
+      const span = document.createElement('span');
+      span.innerHTML = mark(dir);
+      span.className = 'folder';
+      li.appendChild(span);
+      const ul = document.createElement('ul');
+      dirs[dir]
+        .sort((a,b)=>a.localeCompare(b,'es',{sensitivity:'base'}))
+        .forEach(name=>{
+          const sub = document.createElement('li');
+          sub.innerHTML = mark(name);
+          sub.onclick = ()=> { drawer.classList.remove('open'); openFile(dir + '/' + name); };
+          ul.appendChild(sub);
+        });
+      li.appendChild(ul);
+      filelist.appendChild(li);
+    });
 }
 async function openFile(path){
   currentPath = path;
   crumbPath.textContent = path;
   const raw = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${DEFAULT_BRANCH}/${encodeURI(path)}`;
-  const res = await fetch(raw);
-  currentText = await res.text();
+  try {
+    const res = await fetch(raw);
+    if (!res.ok) throw new Error(res.statusText);
+    currentText = await res.text();
+  } catch(err) {
+    showError('Error al abrir archivo', () => openFile(path));
+    return;
+  }
+  const key = 'draft:' + path;
+  const saved = localStorage.getItem(key);
+  let restored = false;
+  if (saved && saved !== currentText){
+    currentText = saved;
+    restored = true;
+  }
   preview.innerHTML = md(currentText);
   // crea id de ancla en headers si no lo puso marked
   preview.querySelectorAll('h1,h2,h3,h4,h5,h6').forEach(h=>{
@@ -144,6 +205,8 @@ async function openFile(path){
   }
   editor.value = currentText;
   updateCounts(currentText);
+  dirty = restored;
+  clearError();
   // Modo lectura por defecto
   setEditMode(false);
   // Mueve al top
@@ -194,8 +257,9 @@ function updateCounts(txt){
 }
 editor.addEventListener('input', ()=>{
   updateCounts(editor.value);
-  // Render “fantasma” para ver cómo quedará mientras editas (opcional)
   preview.innerHTML = md(editor.value);
+  dirty = true;
+  localStorage.setItem('draft:' + currentPath, editor.value);
 });
 
 function applyCmd(cmd){
@@ -222,6 +286,8 @@ function downloadMD(){
   a.download = currentPath.split('/').pop();
   a.click();
   URL.revokeObjectURL(a.href);
+  dirty = false;
+  localStorage.removeItem('draft:' + currentPath);
 }
 
 function downloadHTML(){
@@ -242,3 +308,28 @@ function downloadHTML(){
 document.addEventListener('scroll', ()=>{
   // nada por ahora (ya tenemos barra de límite); si quieres progreso de scroll lo añadimos luego
 });
+
+window.addEventListener('beforeunload', (e)=>{
+  if (dirty){
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+
+function showError(msg, retry){
+  statusMsg.innerHTML = '';
+  statusMsg.className = 'error';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  statusMsg.appendChild(span);
+  if (retry){
+    const btn = document.createElement('button');
+    btn.textContent = 'Reintentar';
+    btn.onclick = retry;
+    statusMsg.appendChild(btn);
+  }
+}
+function clearError(){
+  statusMsg.innerHTML = '';
+  statusMsg.className = '';
+}
