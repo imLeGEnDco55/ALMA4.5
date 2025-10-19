@@ -1,0 +1,18 @@
+backend:
+  name: github
+  repo: imLeGEnDco55/ALMA4.5 # <- Tu repositorio
+  branch: main # <- La rama principal donde se guardarán los cambios
+
+media_folder: "assets/media" # Carpeta para guardar imágenes
+public_folder: "/assets/media" # Cómo se accederá a las imágenes desde el sitio
+
+collections:
+  - name: "memoria"
+    label: "Memorias del Alma"
+    folder: "/" # Le decimos que busque los archivos en la raíz del proyecto
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}" # Nombre de los nuevos archivos
+    fields:
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Cuerpo", name: "body", widget: "markdown" }
+      
