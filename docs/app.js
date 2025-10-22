@@ -12,8 +12,8 @@ const [ownerGuess, repoGuess] = (() => {
   return [owner, repo];
 })();
 
-const REPO_OWNER = ownerGuess || 'imLeGEnDco55'; // fallback
-const REPO_NAME  = repoGuess  || 'ALMA45';       // fallback
+const REPO_OWNER = ownerGuess || 'imLeGEnDco55';  // fallback
+const REPO_NAME  = repoGuess  || 'ALMA4.5';       // fallback
 
 // ===== Helpers =====
 const $ = s => document.querySelector(s);
